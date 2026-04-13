@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MakeX Lebanon 2026 Preview</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#475569;--dark:#0f172a;--blue:#eef2ff;--yellow:#fef3c7}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px} .hero,.card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px}
+    .hero.dark{background:var(--dark);color:#fff} .badge{display:inline-block;background:#e2e8f0;color:#334155;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .hero.dark .badge{background:rgba(255,255,255,.12);color:#fff} .muted{color:var(--muted)} .hero.dark .muted{color:#cbd5e1}
+    .tabs{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 22px} .tab{border:none;background:#fff;border:1px solid var(--border);padding:12px 16px;border-radius:14px;font-weight:700;cursor:pointer}
+    .tab.active{background:var(--dark);color:#fff} .grid{display:grid;gap:16px} .grid2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .grid3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))} .section{display:none} .section.active{display:block}
+    input,select,button{padding:12px;border-radius:12px;border:1px solid #cbd5e1;font:inherit} button.primary{background:var(--dark);color:#fff;border:none;font-weight:700;cursor:pointer}
+    table{width:100%;border-collapse:collapse} th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left} .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#e2e8f0;font-size:12px;font-weight:700}
+    .now{background:var(--blue)} .next{background:var(--yellow)} .prep{background:#f8fafc} .rowflex{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <span class="badge">MakeX Lebanon 2026</span>
+      <h1>Public Preview</h1>
+      <p class="muted">This is a static public preview of the competition system while the full online app is still being wired to Supabase and deployment.</p>
+    </section>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="home">Home</button>
+      <button class="tab" data-tab="admin">Admin</button>
+      <button class="tab" data-tab="judge">Judge</button>
+      <button class="tab" data-tab="coach">Coach</button>
+      <button class="tab" data-tab="live">Live Board</button>
+    </div>
+
+    <section id="home" class="section active">
+      <div class="hero">
+        <span class="badge">Overview</span>
+        <h2>Live Competition Management System</h2>
+        <p class="muted">One system, multiple views: admin, judge, coach, and public live board.</p>
+      </div>
+      <div class="grid grid2" id="categoryCards"></div>
+    </section>
+
+    <section id="admin" class="section">
+      <div class="hero">
+        <span class="badge">Admin</span>
+        <h2>Category first, then filtered tables</h2>
+        <p class="muted">Admin chooses the category first, then only the tables of that category appear. Table counts can also change later.</p>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Configurable table counts</h3>
+        <div class="grid grid2" id="tableCounts"></div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Add participant passation</h3>
+        <div class="grid grid2">
+          <input id="teamName" placeholder="Team name" />
+          <input id="studentName" placeholder="Student name" />
+          <input id="coachName" placeholder="Coach" />
+          <input id="parentName" placeholder="Parent" />
+          <select id="categorySelect"></select>
+          <select id="tableSelect"></select>
+          <input id="timeSelect" type="time" value="09:00" />
+          <button class="primary" id="addRecordBtn">Add record</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3>Current records</h3>
+        <div style="overflow:auto"><table><thead><tr><th>Team</th><th>Student</th><th>Category</th><th>Table</th><th>Time</th><th>Status</th></tr></thead><tbody id="recordsBody"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="judge" class="section">
+      <div class="hero">
+        <span class="badge">Judge</span>
+        <h2>Judge Table View</h2>
+        <p class="muted">Judges only need their table, current queue, and a simple action to move things forward.</p>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <label class="muted">Select assigned table</label>
+        <select id="judgeTableSelect" style="margin-top:10px"></select>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <h3 id="judgeTitle"></h3>
+        <p class="muted" id="judgeSubtitle"></p>
+        <div class="grid grid3" id="judgeQueue" style="margin-top:16px"></div>
+        <button class="primary" id="advanceJudgeBtn" style="margin-top:16px">Finish current and call next</button>
+      </div>
+    </section>
+
+    <section id="coach" class="section">
+      <div class="hero">
+        <span class="badge">Coach</span>
+        <h2>Coach and Teacher Tracking</h2>
+        <p class="muted">Coaches should only see their teams and what action to take now.</p>
+      </div>
+      <div class="card" style="margin-top:16px">
+        <label class="muted">Select coach</label>
+        <select id="coachSelect" style="margin-top:10px"></select>
+      </div>
+      <div class="grid grid2" id="coachCards" style="margin-top:16px"></div>
+    </section>
+
+    <section id="live" class="section">
+      <div class="hero dark">
+        <span class="badge">Public Live Board</span>
+        <h2>Now • Next • Prepare</h2>
+        <p class="muted">For parents, students, and venue screens.</p>
+      </div>
+      <div class="grid grid2" id="liveCards" style="margin-top:16px"></div>
+    </section>
+  </div>
+
+  <script>
+    const categories = [
+      { id:'CAT1', fullName:'Sportswonderland (4-5 years old)', tableCount:5 },
+      { id:'CAT2', fullName:'Sportswonderland (6-7 years old)', tableCount:5 },
+      { id:'CAT3', fullName:'Capelli Soccer', tableCount:3 },
+      { id:'CAT4', fullName:'Capelli Inspire (8-9 years old)', tableCount:5 },
+      { id:'CAT5', fullName:'Capelli Inspire (10-12 years old)', tableCount:5 },
+      { id:'CAT6', fullName:'Capelli Starter (13-15 years old)', tableCount:5 },
+      { id:'CAT7', fullName:'MakeX Inspire (8-12 years old)', tableCount:5 },
+      { id:'CAT8', fullName:'MakeX Starter (11-13 years old)', tableCount:1 }
+    ];
+
+    function buildTables(){
+      return categories.flatMap(cat => Array.from({length:cat.tableCount}, (_,i)=>({
+        id:`${cat.id}-T${i+1}`,
+        shortLabel:`Table ${i+1}`,
+        label:`${cat.fullName} • Table ${i+1}`,
+        categoryId:cat.id,
+        category:cat.fullName
+      })));
+    }
+
+    let records = [
+      { id:'P1', teamName:'RoboHolic Alpha', studentNames:['Alexander Rabbat'], coach:'Eddy Bachaalany', parent:'Mrs. Rabbat', categoryId:'CAT7', tableId:'CAT7-T1', scheduledTime:'09:00', status:'In Progress' },
+      { id:'P2', teamName:'Mini Robots', studentNames:['Clarita Bachaalany'], coach:'Eddy Bachaalany', parent:'Mrs. Bachaalany', categoryId:'CAT2', tableId:'CAT2-T2', scheduledTime:'09:10', status:'On Deck' },
+      { id:'P3', teamName:'Code Rockets', studentNames:['Chloe Abi Ghanem'], coach:'Coach Rita', parent:'Mrs. Abi Ghanem', categoryId:'CAT3', tableId:'CAT3-T1', scheduledTime:'09:12', status:'Called' },
+      { id:'P4', teamName:'RoboHolic Delta', studentNames:['Benita Bachaalany'], coach:'Eddy Bachaalany', parent:'Mrs. Bachaalany', categoryId:'CAT1', tableId:'CAT1-T1', scheduledTime:'09:07', status:'Scheduled' }
+    ];
+
+    let judgeQueue = [
+      { id:'Q1', tableId:'CAT7-T1', teamName:'RoboHolic Alpha', status:'In Progress', scheduledTime:'09:00' },
+      { id:'Q2', tableId:'CAT7-T1', teamName:'Mindscape Beta', status:'Next', scheduledTime:'09:10' },
+      { id:'Q3', tableId:'CAT7-T1', teamName:'Code Rockets', status:'Prepare', scheduledTime:'09:20' },
+      { id:'Q4', tableId:'CAT2-T1', teamName:'Mini Robots', status:'In Progress', scheduledTime:'09:07' },
+      { id:'Q5', tableId:'CAT2-T1', teamName:'RoboHolic Delta', status:'Next', scheduledTime:'09:15' }
+    ];
+
+    const liveRows = [
+      { id:'L1', tableId:'CAT7-T1', teamName:'RoboHolic Alpha', status:'NOW', scheduledTime:'09:00' },
+      { id:'L2', tableId:'CAT7-T1', teamName:'Mindscape Beta', status:'NEXT', scheduledTime:'09:10' },
+      { id:'L3', tableId:'CAT7-T1', teamName:'Code Rockets', status:'PREPARE', scheduledTime:'09:20' },
+      { id:'L4', tableId:'CAT2-T1', teamName:'Mini Robots', status:'NOW', scheduledTime:'09:07' },
+      { id:'L5', tableId:'CAT2-T1', teamName:'RoboHolic Delta', status:'NEXT', scheduledTime:'09:15' }
+    ];
+
+    function renderHome(){
+      document.getElementById('categoryCards').innerHTML = categories.map(c=>`<div class="card"><strong>${c.fullName}</strong><p class="muted" style="margin-top:8px">${c.tableCount} table${c.tableCount>1?'s':''}</p></div>`).join('');
+    }
+
+    function renderAdmin(){
+      document.getElementById('tableCounts').innerHTML = categories.map(c=>`<div class="card"><strong>${c.fullName}</strong><div class="rowflex" style="margin-top:12px"><label class="muted">Tables</label><input type="number" min="1" value="${c.tableCount}" onchange="updateCount('${c.id}', this.value)" style="width:90px" /></div></div>`).join('');
+      const catSel=document.getElementById('categorySelect');
+      catSel.innerHTML=categories.map(c=>`<option value="${c.id}">${c.fullName}</option>`).join('');
+      fillTableSelect();
+      document.getElementById('recordsBody').innerHTML = records.map(r=>{
+        const cat=categories.find(c=>c.id===r.categoryId); const t=buildTables().find(t=>t.id===r.tableId);
+        return `<tr><td>${r.teamName}</td><td>${r.studentNames.join(', ')}</td><td>${cat?cat.fullName:r.categoryId}</td><td>${t?t.shortLabel:r.tableId}</td><td>${r.scheduledTime}</td><td><span class="pill">${r.status}</span></td></tr>`;
+      }).join('');
+    }
+
+    function fillTableSelect(){
+      const categoryId=document.getElementById('categorySelect').value || categories[0].id;
+      const tableSel=document.getElementById('tableSelect');
+      const tables=buildTables().filter(t=>t.categoryId===categoryId);
+      tableSel.innerHTML=tables.map(t=>`<option value="${t.id}">${t.shortLabel}</option>`).join('');
+    }
+
+    function updateCount(categoryId, value){
+      const cat=categories.find(c=>c.id===categoryId); cat.tableCount=Math.max(1, Number(value)||1); renderHome(); renderAdmin(); renderJudge(); renderCoach(); renderLive();
+    }
+    window.updateCount=updateCount;
+
+    document.getElementById('categorySelect').addEventListener('change', fillTableSelect);
+    document.getElementById('addRecordBtn').addEventListener('click', ()=>{
+      const categoryId=document.getElementById('categorySelect').value;
+      const tableId=document.getElementById('tableSelect').value;
+      const teamName=document.getElementById('teamName').value;
+      const studentName=document.getElementById('studentName').value;
+      const coach=document.getElementById('coachName').value;
+      const parent=document.getElementById('parentName').value;
+      const scheduledTime=document.getElementById('timeSelect').value;
+      if(!teamName||!studentName||!coach||!parent) return;
+      records.unshift({id:'P'+Date.now(), teamName, studentNames:[studentName], coach, parent, categoryId, tableId, scheduledTime, status:'Scheduled'});
+      ['teamName','studentName','coachName','parentName'].forEach(id=>document.getElementById(id).value='');
+      renderAdmin(); renderCoach();
+    });
+
+    function renderJudge(){
+      const sel=document.getElementById('judgeTableSelect');
+      const tables=buildTables();
+      const current=sel.value || 'CAT7-T1';
+      sel.innerHTML=tables.map(t=>`<option value="${t.id}">${t.label}</option>`).join('');
+      if(tables.some(t=>t.id===current)) sel.value=current;
+      const table=tables.find(t=>t.id===sel.value) || tables[0];
+      document.getElementById('judgeTitle').textContent=table.category;
+      document.getElementById('judgeSubtitle').textContent=table.shortLabel;
+      document.getElementById('judgeQueue').innerHTML=judgeQueue.filter(q=>q.tableId===table.id).map(item=>`<div class="card"><strong>${item.status}</strong><h3 style="margin-top:12px">${item.teamName}</h3><p class="muted" style="margin-top:8px">Scheduled ${item.scheduledTime}</p></div>`).join('');
+    }
+    document.getElementById('judgeTableSelect').addEventListener('change', renderJudge);
+    document.getElementById('advanceJudgeBtn').addEventListener('click', ()=>{
+      const tableId=document.getElementById('judgeTableSelect').value;
+      judgeQueue=judgeQueue.map(item=>{
+        if(item.tableId!==tableId) return item;
+        if(item.status==='In Progress') return {...item, status:'Completed'};
+        if(item.status==='Next') return {...item, status:'In Progress'};
+        if(item.status==='Prepare') return {...item, status:'Next'};
+        return item;
+      });
+      renderJudge();
+    });
+
+    function renderCoach(){
+      const sel=document.getElementById('coachSelect');
+      const coaches=[...new Set(records.map(r=>r.coach))];
+      const current=sel.value || coaches[0];
+      sel.innerHTML=coaches.map(c=>`<option value="${c}">${c}</option>`).join('');
+      sel.value=coaches.includes(current)?current:coaches[0];
+      const tables=buildTables();
+      const filtered=records.filter(r=>r.coach===sel.value);
+      document.getElementById('coachCards').innerHTML=filtered.map(r=>{
+        const table=tables.find(t=>t.id===r.tableId);
+        const msg=r.status==='In Progress'?'Your team is competing now.':r.status==='On Deck'?'Prepare now. Your team is next.':r.status==='Called'?'Go to the table now.':'Stay alert for the upcoming turn.';
+        return `<div class="card"><strong>${r.teamName}</strong><p class="muted" style="margin-top:8px">${r.studentNames.join(', ')}</p><p style="margin-top:12px"><strong>Status:</strong> ${r.status}</p><p style="margin-top:8px"><strong>Table:</strong> ${table?table.shortLabel:r.tableId}</p><p style="margin-top:8px"><strong>Time:</strong> ${r.scheduledTime}</p><div style="margin-top:14px;padding:14px;border-radius:14px;background:#f1f5f9">${msg}</div></div>`;
+      }).join('');
+    }
+    document.getElementById('coachSelect').addEventListener('change', renderCoach);
+
+    function renderLive(){
+      const tables=buildTables().slice(0,8);
+      document.getElementById('liveCards').innerHTML=tables.map(table=>{
+        const items=liveRows.filter(r=>r.tableId===table.id);
+        const block=(slot,cls)=>{const row=items.find(i=>i.status===slot); return `<div class="${cls}" style="padding:14px;border-radius:14px;border:1px solid #e2e8f0"><strong>${slot}</strong><div style="margin-top:8px">${row?row.teamName:'No team assigned'}</div><div class="muted" style="margin-top:6px">${row?`Scheduled ${row.scheduledTime}`:''}</div></div>`};
+        return `<div class="card"><strong>${table.category}</strong><p class="muted" style="margin-top:8px">${table.shortLabel}</p><div class="grid" style="gap:12px;margin-top:16px">${block('NOW','now')}${block('NEXT','next')}${block('PREPARE','prep')}</div></div>`;
+      }).join('');
+    }
+
+    document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(btn.dataset.tab).classList.add('active');
+    }));
+
+    renderHome(); renderAdmin(); renderJudge(); renderCoach(); renderLive();
+  </script>
+</body>
+</html>
