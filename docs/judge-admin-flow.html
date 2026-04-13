@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Judge to Admin Flow Preview</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#475569;--dark:#0f172a;--blue:#eef2ff;--yellow:#fef3c7;--green:#dcfce7;--red:#fee2e2;--orange:#ffedd5}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1400px;margin:0 auto;padding:24px}.hero,.card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px}
+    .badge{display:inline-block;background:#e2e8f0;color:#334155;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .muted{color:var(--muted)} .grid{display:grid;gap:16px}.grid2{grid-template-columns:1.1fr .9fr}.grid3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    input,select,button,textarea{padding:12px;border-radius:12px;border:1px solid #cbd5e1;font:inherit;width:100%} textarea{min-height:90px;resize:vertical}
+    button{cursor:pointer;font-weight:700}.primary{background:var(--dark);color:#fff;border:none}.warning{background:#f59e0b;color:#fff;border:none}.danger{background:#ef4444;color:#fff;border:none}.success{background:#16a34a;color:#fff;border:none}.secondary{background:#fff;color:var(--text)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}.row>*{flex:1}.panel{padding:16px;border-radius:18px;border:1px solid var(--border)} .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#e2e8f0;font-size:12px;font-weight:700}
+    .blue{background:var(--blue)} .yellow{background:var(--yellow)} .green{background:var(--green)} .orange{background:var(--orange)} .red{background:var(--red)}
+    .hint{font-size:13px;color:#64748b;margin-top:8px}.ok{color:#15803d;font-weight:700}.warn{color:#b45309;font-weight:700}
+    canvas{border:1px dashed #94a3b8;border-radius:14px;background:#fff;width:100%;height:180px;touch-action:none}
+    table{width:100%;border-collapse:collapse} th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}.small{font-size:12px;color:#64748b}
+  </style>
+</head>
+<body>
+  <div class="wrap grid" style="gap:20px">
+    <section class="hero">
+      <span class="badge">Judge → Admin Flow</span>
+      <h1 style="margin-top:16px;margin-bottom:12px">When the judge finishes, the result is sent to admin</h1>
+      <p class="muted">This preview demonstrates the exact handoff you requested: once the current team signs and the judge presses <strong>Finish</strong>, the <strong>score</strong>, <strong>time</strong>, <strong>notes</strong>, and a <strong>signature proof</strong> are added to the admin side.</p>
+    </section>
+
+    <div class="grid grid2">
+      <section class="card">
+        <h2>Judge panel</h2>
+        <div class="row" style="margin-top:16px">
+          <div>
+            <label class="muted">Assigned table</label>
+            <select id="tableSelect"></select>
+          </div>
+          <div>
+            <label class="muted">Run time (seconds)</label>
+            <input id="runTime" type="number" min="0" value="0" />
+          </div>
+          <div>
+            <label class="muted">Team score</label>
+            <input id="teamScore" type="number" min="0" value="0" />
+          </div>
+        </div>
+
+        <div class="panel blue" id="currentCard" style="margin-top:16px"></div>
+        <div id="signatureStatus" class="hint warn">Signature required before Finish.</div>
+
+        <div class="row" style="margin-top:16px">
+          <button id="btnNext" class="secondary">Next</button>
+          <button id="btnDelay" class="warning">Delay</button>
+          <button id="btnAbsent" class="danger">Absent</button>
+          <button id="btnFinish" class="success">Finish & Send to Admin</button>
+        </div>
+
+        <div class="card" style="margin-top:16px;padding:16px">
+          <h3 style="margin-top:0">Queue</h3>
+          <div id="queueCards" class="grid grid3"></div>
+        </div>
+
+        <div class="row" style="margin-top:16px">
+          <div>
+            <h3>Judge notes</h3>
+            <textarea id="judgeNotes" placeholder="Add penalties, retry note, or observations..."></textarea>
+          </div>
+          <div>
+            <h3>Current team signature</h3>
+            <canvas id="signaturePad" width="500" height="180"></canvas>
+            <div class="row" style="margin-top:12px">
+              <button id="clearSignature" class="secondary">Clear signature</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Admin received results</h2>
+        <p class="muted">This is what admin should receive after the judge clicks Finish.</p>
+        <div style="overflow:auto;margin-top:16px">
+          <table>
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>Table</th>
+                <th>Score</th>
+                <th>Time</th>
+                <th>Notes</th>
+                <th>Signature</th>
+              </tr>
+            </thead>
+            <tbody id="adminResultsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const tables = [
+      { id:'CAT7-T1', label:'MakeX Inspire (8-12 years old) • Table 1', shortLabel:'Table 1', category:'MakeX Inspire (8-12 years old)' },
+      { id:'CAT2-T1', label:'Sportswonderland (6-7 years old) • Table 1', shortLabel:'Table 1', category:'Sportswonderland (6-7 years old)' }
+    ];
+
+    let queue = [
+      { id:'Q1', tableId:'CAT7-T1', teamName:'RoboHolic Alpha', status:'In Progress', scheduledTime:'09:00' },
+      { id:'Q2', tableId:'CAT7-T1', teamName:'Mindscape Beta', status:'Next', scheduledTime:'09:10' },
+      { id:'Q3', tableId:'CAT7-T1', teamName:'Code Rockets', status:'Prepare', scheduledTime:'09:20' },
+      { id:'Q4', tableId:'CAT7-T1', teamName:'Mini Robots', status:'Queued', scheduledTime:'09:30' }
+    ];
+
+    let adminResults = [];
+
+    const tableSelect = document.getElementById('tableSelect');
+    tableSelect.innerHTML = tables.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
+    tableSelect.value = 'CAT7-T1';
+
+    const canvas = document.getElementById('signaturePad');
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    let drawing = false;
+    let hasSignature = false;
+    let signatureForTeamId = null;
+
+    function getCurrentTeam(){
+      const currentTable = tableSelect.value;
+      const visible = queue.filter(item => item.tableId === currentTable);
+      return visible.find(item => item.status === 'In Progress') || visible[0] || null;
+    }
+
+    function clearSignaturePad(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      hasSignature = false;
+      signatureForTeamId = null;
+      updateSignatureStatus();
+    }
+
+    function updateSignatureStatus(){
+      const current = getCurrentTeam();
+      const el = document.getElementById('signatureStatus');
+      if(!current){
+        el.className = 'hint';
+        el.textContent = 'No current team.';
+        return;
+      }
+      if(hasSignature && signatureForTeamId === current.id){
+        el.className = 'hint ok';
+        el.textContent = `Signature captured for ${current.teamName}. Finish can send this result to admin.`;
+      } else {
+        el.className = 'hint warn';
+        el.textContent = `Signature required for ${current.teamName} before Finish.`;
+      }
+    }
+
+    function renderJudge(){
+      const currentTable = tableSelect.value;
+      const currentMeta = tables.find(t => t.id === currentTable);
+      const visible = queue.filter(item => item.tableId === currentTable);
+      const current = getCurrentTeam();
+
+      document.getElementById('currentCard').innerHTML = current
+        ? `<span class="pill">${current.status}</span><h3 style="margin-top:12px">${current.teamName}</h3><p class="muted" style="margin-top:8px">${currentMeta.category} • ${currentMeta.shortLabel}</p><p style="margin-top:8px"><strong>Scheduled:</strong> ${current.scheduledTime}</p>`
+        : '<p class="muted">No current team.</p>';
+
+      document.getElementById('queueCards').innerHTML = visible.map(item => {
+        const tone = item.status === 'In Progress' ? 'blue' : item.status === 'Next' ? 'yellow' : item.status === 'Prepare' ? 'orange' : item.status === 'Finished' ? 'green' : item.status === 'Absent' ? 'red' : 'panel';
+        return `<div class="panel ${tone}"><strong>${item.status}</strong><div style="margin-top:8px">${item.teamName}</div><div class="small" style="margin-top:6px">${item.scheduledTime}</div></div>`;
+      }).join('');
+
+      if(current && signatureForTeamId && signatureForTeamId !== current.id){
+        clearSignaturePad();
+      } else {
+        updateSignatureStatus();
+      }
+    }
+
+    function renderAdmin(){
+      document.getElementById('adminResultsBody').innerHTML = adminResults.length
+        ? adminResults.map(item => `
+            <tr>
+              <td><strong>${item.teamName}</strong><div class="small">${item.status}</div></td>
+              <td>${item.tableLabel}</td>
+              <td>${item.score}</td>
+              <td>${item.time} sec</td>
+              <td>${item.notes}</td>
+              <td><span class="pill">${item.signatureCaptured ? 'Captured' : 'Missing'}</span></td>
+            </tr>
+          `).join('')
+        : '<tr><td colspan="6" class="muted">No finished results received yet.</td></tr>';
+    }
+
+    function moveForward(action){
+      const currentTable = tableSelect.value;
+      queue = queue.map(item => {
+        if(item.tableId !== currentTable) return item;
+        if(item.status === 'In Progress') return { ...item, status: action };
+        if(action === 'Completed' || action === 'Finished' || action === 'Absent' || action === 'Delayed') {
+          if(item.status === 'Next') return { ...item, status:'In Progress' };
+          if(item.status === 'Prepare') return { ...item, status:'Next' };
+          if(item.status === 'Queued') return { ...item, status:'Prepare' };
+        }
+        return item;
+      });
+      clearSignaturePad();
+      renderJudge();
+    }
+
+    document.getElementById('btnNext').addEventListener('click', () => moveForward('Completed'));
+    document.getElementById('btnDelay').addEventListener('click', () => moveForward('Delayed'));
+    document.getElementById('btnAbsent').addEventListener('click', () => moveForward('Absent'));
+
+    document.getElementById('btnFinish').addEventListener('click', () => {
+      const current = getCurrentTeam();
+      if(!current){ alert('No current team selected.'); return; }
+      if(!(hasSignature && signatureForTeamId === current.id)){
+        alert(`The current team (${current.teamName}) must sign before Finish.`);
+        return;
+      }
+      const tableMeta = tables.find(t => t.id === tableSelect.value);
+      adminResults.unshift({
+        id: 'R' + Date.now(),
+        teamName: current.teamName,
+        tableLabel: tableMeta ? tableMeta.label : current.tableId,
+        score: document.getElementById('teamScore').value || '0',
+        time: document.getElementById('runTime').value || '0',
+        notes: document.getElementById('judgeNotes').value || 'No notes',
+        signatureCaptured: true,
+        status: 'Finished'
+      });
+      renderAdmin();
+      moveForward('Finished');
+      document.getElementById('teamScore').value = '0';
+      document.getElementById('runTime').value = '0';
+      document.getElementById('judgeNotes').value = '';
+    });
+
+    tableSelect.addEventListener('change', () => { clearSignaturePad(); renderJudge(); });
+
+    function getPos(evt){
+      const rect = canvas.getBoundingClientRect();
+      const touch = evt.touches ? evt.touches[0] : evt;
+      return { x:(touch.clientX - rect.left) * (canvas.width / rect.width), y:(touch.clientY - rect.top) * (canvas.height / rect.height) };
+    }
+    function startDraw(evt){
+      const current = getCurrentTeam();
+      if(!current) return;
+      drawing = true;
+      signatureForTeamId = current.id;
+      const pos = getPos(evt);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+      evt.preventDefault();
+    }
+    function moveDraw(evt){
+      if(!drawing) return;
+      const pos = getPos(evt);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      hasSignature = true;
+      updateSignatureStatus();
+      evt.preventDefault();
+    }
+    function endDraw(){ drawing = false; }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', startDraw, { passive:false });
+    canvas.addEventListener('touchmove', moveDraw, { passive:false });
+    window.addEventListener('touchend', endDraw);
+    document.getElementById('clearSignature').addEventListener('click', clearSignaturePad);
+
+    renderJudge();
+    renderAdmin();
+  </script>
+</body>
+</html>
