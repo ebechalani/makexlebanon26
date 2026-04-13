@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MakeX Lebanon 2026 - Admin Results</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#475569;--green:#dcfce7;--red:#fee2e2;--orange:#ffedd5}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1380px;margin:0 auto;padding:24px;display:grid;gap:20px}.hero,.card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px}
+    .badge{display:inline-block;background:#e2e8f0;color:#334155;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .muted{color:var(--muted);line-height:1.6}.small{color:#64748b;font-size:12px}.pill{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
+    table{width:100%;border-collapse:collapse} th,td{padding:12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+    img.sig{width:140px;height:56px;object-fit:contain;border:1px solid #cbd5e1;border-radius:8px;background:#fff}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <span class="badge">Admin Results Dashboard</span>
+      <h1 style="margin-top:16px;margin-bottom:12px">Judge decisions received by admin</h1>
+      <p class="muted">Separate static admin page showing finished, absent, and delayed results with score, time, notes, judge name, and signature image.</p>
+    </section>
+
+    <section class="card">
+      <div style="overflow:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Team</th>
+              <th>Category</th>
+              <th>Table</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Time</th>
+              <th>Notes</th>
+              <th>Judge</th>
+              <th>Signature</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>RoboHolic Alpha</strong></td>
+              <td>MakeX Inspire (8-12 years old)</td>
+              <td>Table 1</td>
+              <td><span class="pill" style="background:var(--green)">Finished</span></td>
+              <td>185</td>
+              <td>92 sec</td>
+              <td>Clean run, no penalties.</td>
+              <td>Judge 1</td>
+              <td><img class="sig" alt="signature" src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27220%27%20height%3D%2770%27%20viewBox%3D%270%200%20220%2070%27%3E%3Crect%20width%3D%27220%27%20height%3D%2770%27%20fill%3D%27white%27/%3E%3Cpath%20d%3D%27M15%2045%20C%2035%2015%2C%2045%2060%2C%2068%2028%20S%20105%2055%2C%20126%2030%20S%20165%2056%2C%20205%2026%27%20stroke%3D%27%230f172a%27%20stroke-width%3D%273%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27/%3E%3C/svg%3E" /></td>
+            </tr>
+            <tr>
+              <td><strong>Mindscape Beta</strong></td>
+              <td>MakeX Inspire (8-12 years old)</td>
+              <td>Table 1</td>
+              <td><span class="pill" style="background:var(--red)">Absent</span></td>
+              <td>--</td>
+              <td>--</td>
+              <td>Team did not arrive when called.</td>
+              <td>Judge 1</td>
+              <td><span class="small">No signature</span></td>
+            </tr>
+            <tr>
+              <td><strong>Mini Robots</strong></td>
+              <td>Sportswonderland (6-7 years old)</td>
+              <td>Table 1</td>
+              <td><span class="pill" style="background:var(--orange)">Delayed</span></td>
+              <td>--</td>
+              <td>--</td>
+              <td>Robot battery issue, sent back to waiting area.</td>
+              <td>Judge 2</td>
+              <td><span class="small">No signature</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
