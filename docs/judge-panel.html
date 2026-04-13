@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MakeX Judge Panel Preview</title>
+  <style>
+    :root{--bg:#f8fafc;--card:#fff;--border:#e2e8f0;--text:#0f172a;--muted:#475569;--dark:#0f172a;--blue:#eef2ff;--yellow:#fef3c7;--red:#fee2e2;--orange:#ffedd5;--green:#dcfce7}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}.hero,.card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px}
+    .badge{display:inline-block;background:#e2e8f0;color:#334155;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+    .muted{color:var(--muted)} .grid{display:grid;gap:16px} .grid2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.grid3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+    input,select,button,textarea{padding:12px;border-radius:12px;border:1px solid #cbd5e1;font:inherit;width:100%} textarea{min-height:110px;resize:vertical}
+    button{cursor:pointer;font-weight:700}.primary{background:var(--dark);color:#fff;border:none}.warning{background:#f59e0b;color:#fff;border:none}.danger{background:#ef4444;color:#fff;border:none}.success{background:#16a34a;color:#fff;border:none}.secondary{background:#fff;color:var(--text)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}.row > *{flex:1}.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#e2e8f0;font-size:12px;font-weight:700}.panel{padding:16px;border-radius:18px;border:1px solid var(--border)}
+    .blue{background:var(--blue)} .yellow{background:var(--yellow)} .orange{background:var(--orange)} .green{background:var(--green)} .red{background:var(--red)}
+    canvas{border:1px dashed #94a3b8;border-radius:14px;background:#fff;width:100%;height:180px;touch-action:none}
+  </style>
+</head>
+<body>
+  <div class="wrap grid" style="gap:20px">
+    <section class="hero">
+      <span class="badge">Judge Control Preview</span>
+      <h1 style="margin-top:16px;margin-bottom:12px">Judge Panel with Actions, Score, Time, and Signature</h1>
+      <p class="muted">This public preview shows the kind of control panel a judge should have during the competition: <strong>Next</strong>, <strong>Delay</strong>, <strong>Absent</strong>, <strong>Finish</strong>, score entry, time, and team signature.</p>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div>
+          <label class="muted">Assigned table</label>
+          <select id="tableSelect"></select>
+        </div>
+        <div>
+          <label class="muted">Run time (seconds)</label>
+          <input id="runTime" type="number" min="0" value="0" />
+        </div>
+        <div>
+          <label class="muted">Team score</label>
+          <input id="teamScore" type="number" min="0" value="0" />
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid2">
+      <div class="card">
+        <h2>Current team</h2>
+        <div id="currentCard" class="panel blue" style="margin-top:16px"></div>
+        <div class="row" style="margin-top:16px">
+          <button id="btnNext" class="secondary">Next</button>
+          <button id="btnDelay" class="warning">Delay</button>
+          <button id="btnAbsent" class="danger">Absent</button>
+          <button id="btnFinish" class="success">Finish</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Queue</h2>
+        <div id="queueCards" class="grid grid3" style="margin-top:16px"></div>
+      </div>
+    </section>
+
+    <section class="grid grid2">
+      <div class="card">
+        <h2>Judge notes</h2>
+        <textarea id="judgeNotes" placeholder="Add notes about the run, penalties, retry, or observations..."></textarea>
+      </div>
+
+      <div class="card">
+        <h2>Team signature</h2>
+        <p class="muted">The team or coach can sign here to confirm the run and score.</p>
+        <canvas id="signaturePad" width="500" height="180"></canvas>
+        <div class="row" style="margin-top:16px">
+          <button id="clearSignature" class="secondary">Clear signature</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Latest decision summary</h2>
+      <div id="summary" class="panel green" style="margin-top:16px">No action yet.</div>
+    </section>
+  </div>
+
+  <script>
+    const categories = [
+      { id:'CAT1', fullName:'Sportswonderland (4-5 years old)', tableCount:5 },
+      { id:'CAT2', fullName:'Sportswonderland (6-7 years old)', tableCount:5 },
+      { id:'CAT3', fullName:'Capelli Soccer', tableCount:3 },
+      { id:'CAT4', fullName:'Capelli Inspire (8-9 years old)', tableCount:5 },
+      { id:'CAT5', fullName:'Capelli Inspire (10-12 years old)', tableCount:5 },
+      { id:'CAT6', fullName:'Capelli Starter (13-15 years old)', tableCount:5 },
+      { id:'CAT7', fullName:'MakeX Inspire (8-12 years old)', tableCount:5 },
+      { id:'CAT8', fullName:'MakeX Starter (11-13 years old)', tableCount:1 }
+    ];
+
+    const tables = categories.flatMap(cat => Array.from({length:cat.tableCount}, (_,i)=>({
+      id:`${cat.id}-T${i+1}`,
+      label:`${cat.fullName} • Table ${i+1}`,
+      shortLabel:`Table ${i+1}`,
+      category:cat.fullName
+    })));
+
+    let queue = [
+      { id:'Q1', tableId:'CAT7-T1', teamName:'RoboHolic Alpha', status:'In Progress', scheduledTime:'09:00' },
+      { id:'Q2', tableId:'CAT7-T1', teamName:'Mindscape Beta', status:'Next', scheduledTime:'09:10' },
+      { id:'Q3', tableId:'CAT7-T1', teamName:'Code Rockets', status:'Prepare', scheduledTime:'09:20' },
+      { id:'Q4', tableId:'CAT7-T1', teamName:'Mini Robots', status:'Queued', scheduledTime:'09:30' }
+    ];
+
+    const tableSelect = document.getElementById('tableSelect');
+    tableSelect.innerHTML = tables.map(t => `<option value="${t.id}">${t.label}</option>`).join('');
+    tableSelect.value = 'CAT7-T1';
+
+    function renderJudge(){
+      const currentTable = tableSelect.value;
+      const currentMeta = tables.find(t => t.id === currentTable);
+      const visible = queue.filter(item => item.tableId === currentTable);
+      const current = visible.find(item => item.status === 'In Progress') || visible[0];
+
+      document.getElementById('currentCard').innerHTML = current
+        ? `<div><span class="pill">${current.status}</span><h3 style="margin-top:12px">${current.teamName}</h3><p class="muted" style="margin-top:8px">${currentMeta.category} • ${currentMeta.shortLabel}</p><p style="margin-top:8px"><strong>Scheduled:</strong> ${current.scheduledTime}</p></div>`
+        : '<p class="muted">No current team for this table.</p>';
+
+      document.getElementById('queueCards').innerHTML = visible.map(item => {
+        const tone = item.status === 'In Progress' ? 'blue' : item.status === 'Next' ? 'yellow' : item.status === 'Prepare' ? 'orange' : 'panel';
+        return `<div class="panel ${tone}"><strong>${item.status}</strong><div style="margin-top:10px">${item.teamName}</div><div class="muted" style="margin-top:6px">${item.scheduledTime}</div></div>`;
+      }).join('');
+    }
+
+    function logSummary(action){
+      const currentTable = tableSelect.value;
+      const current = queue.find(item => item.tableId === currentTable && item.status === 'In Progress') || queue.find(item => item.tableId === currentTable);
+      const score = document.getElementById('teamScore').value;
+      const runTime = document.getElementById('runTime').value;
+      const notes = document.getElementById('judgeNotes').value || 'No notes';
+      document.getElementById('summary').innerHTML = `<strong>Action:</strong> ${action}<br><strong>Team:</strong> ${current ? current.teamName : 'No team'}<br><strong>Score:</strong> ${score}<br><strong>Time:</strong> ${runTime} sec<br><strong>Notes:</strong> ${notes}`;
+    }
+
+    document.getElementById('btnNext').addEventListener('click', () => {
+      const currentTable = tableSelect.value;
+      queue = queue.map(item => {
+        if(item.tableId !== currentTable) return item;
+        if(item.status === 'In Progress') return { ...item, status:'Completed' };
+        if(item.status === 'Next') return { ...item, status:'In Progress' };
+        if(item.status === 'Prepare') return { ...item, status:'Next' };
+        if(item.status === 'Queued') return { ...item, status:'Prepare' };
+        return item;
+      });
+      renderJudge();
+      logSummary('Next');
+    });
+
+    document.getElementById('btnDelay').addEventListener('click', () => {
+      const currentTable = tableSelect.value;
+      queue = queue.map(item => item.tableId === currentTable && item.status === 'In Progress' ? { ...item, status:'Delayed' } : item);
+      renderJudge();
+      logSummary('Delay');
+    });
+
+    document.getElementById('btnAbsent').addEventListener('click', () => {
+      const currentTable = tableSelect.value;
+      queue = queue.map(item => item.tableId === currentTable && item.status === 'In Progress' ? { ...item, status:'Absent' } : item);
+      renderJudge();
+      logSummary('Absent');
+    });
+
+    document.getElementById('btnFinish').addEventListener('click', () => {
+      const currentTable = tableSelect.value;
+      queue = queue.map(item => item.tableId === currentTable && item.status === 'In Progress' ? { ...item, status:'Finished' } : item);
+      renderJudge();
+      logSummary('Finish');
+    });
+
+    tableSelect.addEventListener('change', renderJudge);
+
+    const canvas = document.getElementById('signaturePad');
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    let drawing = false;
+
+    function getPos(evt){
+      const rect = canvas.getBoundingClientRect();
+      const touch = evt.touches ? evt.touches[0] : evt;
+      return { x:(touch.clientX - rect.left) * (canvas.width / rect.width), y:(touch.clientY - rect.top) * (canvas.height / rect.height) };
+    }
+
+    function startDraw(evt){ drawing = true; const pos = getPos(evt); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); evt.preventDefault(); }
+    function moveDraw(evt){ if(!drawing) return; const pos = getPos(evt); ctx.lineTo(pos.x, pos.y); ctx.stroke(); evt.preventDefault(); }
+    function endDraw(){ drawing = false; }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', startDraw, { passive:false });
+    canvas.addEventListener('touchmove', moveDraw, { passive:false });
+    window.addEventListener('touchend', endDraw);
+
+    document.getElementById('clearSignature').addEventListener('click', () => ctx.clearRect(0,0,canvas.width,canvas.height));
+
+    renderJudge();
+  </script>
+</body>
+</html>
